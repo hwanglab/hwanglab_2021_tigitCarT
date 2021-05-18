@@ -1,0 +1,5 @@
+sample,seqlib,patient_id,timepoint,celltype,index,library_type,run_id,sample_tag,fastqs
+FB-10Manufactured-H4,FB,P10,day0,CART,H4,Antibody Capture,1911UNHS-0191,FB_P10_day0_CART,data/fastq/FB-10Manufactured-H4
+GEX-10Manufactured-A6,GEX,P10,day0,CART,A6,Gene Expression,1911UNHS-0191,GEX_P10_day0_CART,data/fastq/GEX-10Manufactured-A6
+FB-10Manufactured-H4,FB,P10,day0,CART,H4,Antibody Capture,1912UAHS-0187,FB_P10_day0_CART,data/fastq/FB-10Manufactured-H4
+GEX-10Manufactured-A6,GEX,P10,day0,CART,A6,Gene Expression,1912UAHS-0187,GEX_P10_day0_CART,data/fastq/GEX-10Manufactured-A6
