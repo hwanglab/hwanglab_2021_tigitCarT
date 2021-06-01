@@ -1,3 +1,5 @@
+## R version used in the manuscript
+- R 3.5.2
 
 ## Prepapre computational environment and your bash configuration
 - Prepare a project directory to work on. For example,
