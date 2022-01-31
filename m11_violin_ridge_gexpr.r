@@ -14,6 +14,7 @@ violin_plots2 <- function(seuj,
 													my_comps,
 													field2cmp,
 													pdf_fn,
+													comp_label = "p.signif",
 													width1=8,
 													height1=10,
 													title1="expressed",
@@ -37,7 +38,7 @@ violin_plots2 <- function(seuj,
 	gexpr1.dt<-gexpr.dt[expression_level>0.,]
 	
 	p =ggplot(gexpr1.dt,
-							aes_string(x=field2cmp, y='expression_level', fill=field2cmp)) +
+						aes_string(x=field2cmp, y='expression_level', fill=field2cmp)) +
 		geom_violin(position = position_dodge(width = 0.5)) +
 		stat_summary(fun.data=mean_sdl,geom="pointrange", color="black",size=0.25,fun.args = list(mult = 1)) +
 		stat_compare_means(aes_string(group=field2cmp),
@@ -45,7 +46,7 @@ violin_plots2 <- function(seuj,
 											 method="wilcox.test",
 											 hide.ns=T,
 											 vjust=0.8,
-											 label = "p.signif",
+											 label = comp_label,
 											 comparisons = my_comps) +
 		
 		facet_grid(cols=vars(gene)) +
@@ -75,7 +76,8 @@ violin_plots2 <- function(seuj,
 											 # method="wilcox.test",
 											 hide.ns=T,
 											 vjust=0.8,
-											 label = "p.signif",
+											 label = comp_label,
+											 # label = "p.signif",
 											 comparisons = my_comps) +
 		facet_grid(cols=vars(gene)) +
 		theme(axis.title.x=element_blank(),axis.text.x=element_blank()) +
@@ -93,15 +95,16 @@ violin_plots2 <- function(seuj,
 }
 
 violin_by_clusters_plots2 <- function(seuj,
-													goi,
-													my_comps,
-													field2cmp,
-													field2cmp_order,
-													pdf_fn,
-													width1=8,
-													height1=10,
-													title1="expressed",
-													debug2=0) {
+																			goi,
+																			my_comps,
+																			field2cmp,
+																			field2cmp_order,
+																			pdf_fn,
+																			width1=8,
+																			height1=10,
+																			comp_label = "p.signif",
+																			title1="expressed",
+																			debug2=0) {
 	
 	if (debug2==1){browser()}
 	
@@ -125,7 +128,7 @@ violin_by_clusters_plots2 <- function(seuj,
 	
 	lapply(cluster_group,function(clsgroup){
 		p <- ggplot(gexpr.dt[seurat_clusters %in% clsgroup,],
-				 aes_string(x=field2cmp, y='expression_level', fill=field2cmp)) +
+								aes_string(x=field2cmp, y='expression_level', fill=field2cmp)) +
 			geom_violin(position = position_dodge(width = 0.5)) +
 			stat_summary(fun.data=mean_sdl,geom="pointrange", color="black",size=0.25,fun.args = list(mult = 1)) +
 			stat_compare_means(aes_string(group=field2cmp),
@@ -133,7 +136,8 @@ violin_by_clusters_plots2 <- function(seuj,
 												 method="wilcox.test",
 												 hide.ns=T,
 												 vjust=0.8,
-												 label = "p.signif",
+												 label = comp_label,
+												 #label = "p.signif",
 												 comparisons = my_comps) +
 			
 			facet_grid(cols=vars(gene),rows=vars(seurat_clusters)) +
@@ -149,15 +153,15 @@ violin_by_clusters_plots2 <- function(seuj,
 
 
 violin_by_patient_plots <- function(seuj,
-																			goi,
-																			my_comps,
-																			field2cmp,
-																			field2cmp_order,
-																			pdf_fn,
-																			width1=8,
-																			height1=10,
-																			title1="expressed",
-																			debug2=0) {
+																		goi,
+																		my_comps,
+																		field2cmp,
+																		field2cmp_order,
+																		pdf_fn,
+																		width1=8,
+																		height1=10,
+																		title1="expressed",
+																		debug2=0) {
 	
 	if (debug2==1){browser()}
 	
@@ -179,7 +183,7 @@ violin_by_patient_plots <- function(seuj,
 	# ----------------
 	
 	by_resps<-split(gexpr.dt,by="resp")
-
+	
 	plist = imap(by_resps,function(clsgroup,rgroup) {
 		# clsgroup = by_resps[[1]]
 		# rgroup = "R"
@@ -237,14 +241,14 @@ maj_ctype_cluster[['CD8']] <- seurat_clusters[m_scaled[,'CD4']<m_scaled[,'CD8']]
 # ========================
 message("split cells into tgroup and violin plot of checkpoint receptor expression at pre/post per each patient...")
 my_comps <- list(c("NR","R"))
-goi <- c("CTLA4","LAG3","HAVCR2","PDCD1","TIGIT","VSIR")
+goi <- c("CTLA4","LAG3","HAVCR2","PDCD1","TIGIT","VSIR","PVRIG")
 
 seus <- split_seurat_by_cellgroup(seu,debug2=0)
 
 plist <- lapply(names(seus),function(ctype) {
 	# ctype <- "CD8"
 	# tgroup<-"post_inf"
-
+	
 	message(sprintf("c:%s",ctype))
 	
 	seuj <- seus[[ctype]]
@@ -283,15 +287,17 @@ plist <- lapply(names(seus),function(tgroup) {
 		seujm <- subset(seuj,seurat_clusters %in% maj_clusters)
 		
 		violin_by_clusters_plots2(seujm,
-									goi,
-									my_comps,
-									field2cmp="resp",
-									field2cmp_order = c("R","NR"),
-									pdf_fn=file.path(args$outd,sprintf("%s_%s_checkpoint_inhib_expr_per_resp.pdf",tgroup,ctype)),
-									width1=8,
-									height1=10,
-									title1=sprintf("[%s;%s] checkpoint inhibitors expression level per resp",tgroup,ctype),
-									debug2=0)
+															goi,
+															my_comps,
+															field2cmp="resp",
+															field2cmp_order = c("R","NR"),
+															comp_label = "p.signif",
+															#comp_label = "p.format",
+															pdf_fn=file.path(args$outd,sprintf("%s_%s_checkpoint_inhib_expr_per_resp.pdf",tgroup,ctype)),
+															width1=8,
+															height1=10,
+															title1=sprintf("[%s;%s] checkpoint inhibitors expression level per resp",tgroup,ctype),
+															debug2=0)
 	})
 })
 
@@ -310,6 +316,8 @@ lapply(names(seu_by_ctypes),function(ctype) {
 								field2cmp="tpoint",
 								pdf_fn=file.path(args$outd,sprintf("%s_checkpoint_inhib_expr_per_tpoint.pdf",ctype)),
 								width1=8,
+								comp_label = "p.signif",
+								# comp_label = "p.format",
 								height1=10,
 								title1=sprintf("[%s] checkpoint inhibitors expression level (>0.) per timepoint",ctype),
 								title2=sprintf("[%s] cell pct where checkpoint inhibitors never expressed",ctype),
