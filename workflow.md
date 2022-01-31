@@ -1,7 +1,7 @@
 ## R version used in the manuscript
 - R 3.5.1
 
-## Prepapre computational environment and your bash configuration
+## Required step: To prepapre computational environment and your bash configuration
 - Prepare a project directory to work on. For example,
 	- `mkdir -p ~/projects`
 - Clone the paper reproducible code from this github
@@ -14,28 +14,6 @@
 
 - Setup some required R library modules
 	- `Rscript ./m01a_R_module_setup.r`
-
-- Data analysis step
-	- Download FASTQ files from EGA and save the files into `hwanglab_2021_tigitCarT/data/fastq`
-
-
-## Workflow
-### Option1: FASTQ to cellranger read count matrix
-- Perform cellranger for 1st seqrun. For example,
-	- ```cellranger count --id P3D0.c1 --transcriptome=${REFD}/10x_genomics/GRCh38 --fastqs=data/fastq/D1_1,data/fastq/D1_2 --nosecondary --localcores=20 --localmem=196```
-
-- Perform cellranger with feature barcodes for 2nd seqrun. For example,
-	- ```cellranger count --id P10D0.c2 --transcriptome=${REFD}/10x_genomics/GRCh38 --libraries=data/sample_sheets/P10_day0_CART.csv --feature-ref=data/sample_sheets/srun2_fr_totalseqB.csv --localcores=12 --localmem=96```
-
-- convert the cellranger read count matrices to Seurat object files: `m02a_cellranger_to_seurat.r`
-
-- perform QC and retain a high quality read count matrix: `m03a_qc_cells.r`
-
-- run SingleR on each sample using the reference database (GSE107011): `m04a_cell_id_by_single.r`
-
-### Option2: Starting from the preprocessed Seurat object files directly
-- download the QC'ed Seurat object file (`seus_20210202.rds`) at `https://m-17902d.f0ce50.e229.dn.glob.us/projects/pub_data/2021a.CART_TIGIT/seus_20210202.rds.gpg` and copy the file into `out/cart` directory, i.e (`out/cart/seus_20210202.rds`)
-
 
 ### Data integration to all downstream analyses
 - `m05a_harmony_findmarkers.r`
