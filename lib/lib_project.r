@@ -329,7 +329,7 @@ select_top_deg_feats <- function(deg_dt,out_tsv=NA,n1=10,n2=3,excl_pat="^HLA-|^I
 	genes[!is.na(genes)]
 }
 
-heatmap_annotated_clusters <- function(plot_title,cls_marker_deg,smeta,pdf_pref,majcn=10,mincn=3,apvalco=0.05,zscored=1,incl_genes=c("CD4","CD40LG","TNFRSF4","CD8A","CD8B","TIGIT"),ctypes=c("CD4","CD8"),row_split_cnt=3,col_split_cnt=3,width1=6,height1=10,debug2=0) {
+heatmap_annotated_clusters <- function(plot_title,cls_marker_deg,smeta,pdf_pref,majcn=10,mincn=3,apvalco=0.05,zscored=1,incl_genes=c("CD4","CD40LG","TNFRSF4","CD8A","CD8B","TIGIT"),ctypes=c("CD4","CD8"),row_split_cnt=3,col_split_cnt=3,width1=6,height1=10,abs_avg_logFC=0,top_genes=NA,debug2=0) {
 
 	cls_marker_deg <- as.data.table(cls_marker_deg)
 	colnames(cls_marker_deg) <- c("p_val","avg_logFC","pct.1","pct.2","p_val_adj","cluster","gene")
@@ -349,16 +349,24 @@ heatmap_annotated_clusters <- function(plot_title,cls_marker_deg,smeta,pdf_pref,
 			message(sprintf("either 1 feature or 1 cluster is observed and ignore heatmap plotting!"))
 		} else {
 			cls_marker_deg = cls_marker_deg[gene %in% rownames(logfc_mat),]
-			cls_marker_deg[,sort_by:=abs(avg_logFC)]
+			if (abs_avg_logFC==1) {
+				cls_marker_deg[,sort_by:=abs(avg_logFC)]
+			} else {
+				cls_marker_deg[,sort_by:=avg_logFC]
+			}
 			
 			if (dim(logfc_mat)[1]>100) {
-				top_genes = select_top_deg_feats(cls_marker_deg,
-																				 incl=incl_genes,
-																				 n1=majcn,
-																				 n2=mincn,
-																				 debug2=debug2)
-				cls_marker_deg$sort_by <- NULL
-				logfc_mat <- logfc_mat[top_genes %in% rownames(logfc_mat),]
+				if (is.na(top_genes)){
+					top_genes = select_top_deg_feats(cls_marker_deg,
+																					 incl=incl_genes,
+																					 n1=majcn,
+																					 n2=mincn,
+																					 debug2=debug2)
+					cls_marker_deg$sort_by <- NULL
+					logfc_mat <- logfc_mat[top_genes[top_genes %in% rownames(logfc_mat)],]
+				} else {
+					logfc_mat <- logfc_mat[top_genes,]
+				}
 			}
 			
 			if (debug2==1){browser()}
@@ -439,6 +447,7 @@ Heatmap_cluster_prof <- function(smeta,cluster_ids,ctypes=c("CD4","CD8"), debug2
 	smry[,resp:=factor(resp,level=c("R","NR"))]
 	smry$cd4_cd8 <- "CD4"
 	smry[grep("CD8",pmid_30726743),cd4_cd8:="CD8"]
+	
 	message(sprintf("total # of cells [%d]",sum(smry$cnt)))
 
 	#total number of cells for each sample
@@ -690,16 +699,20 @@ load_20210202_seus <- function(stype="cart",
 		seus <- readRDS_w_msg(rds_fpath)
 	} else {
 		message("loading sample metadata ...")
-		seus_rds=get_cellid_seus_rds()
-		sample_meta=get_meta_rds()
+		seus_rds=get_cellid_seus_rds(stype = stype)
+		sample_meta=get_meta_rds(stype = stype)
 		sample_meta=readRDS_w_msg(sample_meta)
 		sample_meta = sample_meta[batch %in% c(1,2) | sample == "P3D14.c3",]
 		seus <- readRDS_w_msg(seus_rds)
 		seus <- seus[sample_meta$sample]
 		
 		seus <- lapply(seus,function(seu) {
-			seu$cd4_cd8 <- "CD4"
-			seu$cd4_cd8[grep("CD8",seu$pmid_30726743)] <- "CD8"
+			if (stype=="cart") {
+				seu$cd4_cd8 <- "CD4"
+				seu$cd4_cd8[grep("CD8",seu$pmid_30726743)] <- "CD8"
+			} else {
+				seu$cd_cd8 <- "unk"
+			}
 			seu
 		})
 		saveRDS(seus,file=rds_fpath)
@@ -828,6 +841,16 @@ split_seurat_by_tgroup <- function(seu,debug2=0) {
 	seus
 }
 
+split_seurat_by_resp <- function(seu,debug2=0) {
+	if (debug2==1){browser()}
+	items <- unique(seu@meta.data$resp)
+	seus <- lapply(items, function(item){
+		subset(seu,resp==`item`)
+	})
+	names(seus) <- items
+	seus
+}
+
 add_tcgroup_meta <- function(seu,stype="cart") {
 	seu$tgroup <- "post_inf"
 	seu$tgroup[seu$tpoint=="D0"] <- "pre_inf"
@@ -849,12 +872,16 @@ add_tcgroup_meta <- function(seu,stype="cart") {
 	seu
 }
 
-add_meta2 <- function(seu) {
+add_meta2 <- function(seu,cd4_cd8T=1) {
 	seu$tgroup <- "post_inf"
 	seu$tgroup[seu$tpoint=="D0"] <- "pre_inf"
 	
-	seu$cd4_cd8 <- "CD4"
-	seu$cd4_cd8[grep("CD8",seu$pmid_30726743)] <- "CD8"
+	if (cd4_cd8T==1) {
+		seu$cd4_cd8 <- "CD4"
+		seu$cd4_cd8[grep("CD8",seu$pmid_30726743)] <- "CD8"
+	} else {
+		seu$cd4_cd8 = "pbmc"
+	}
 	seu
 }
 
@@ -914,7 +941,7 @@ split_seurat_by_tgroup <- function(seu,debug2=0) {
 }
 
 get_cart_markers_by_ctype_tpoint <- function() {
-	readRDS('/home/hongc2/projects/20200327.cart/ms_tigit0/CART/02a_singleR/s01_compare_pbmc_tcells_T/a05b02_cart_markers_ctype_tpoint.rds')
+	readRDS('~/projects/20200327.cart/ms_tigit0/CART/02a_singleR/s01_compare_pbmc_tcells_T/a05b02_cart_markers_ctype_tpoint.rds')
 }
 
 get_non_responders <- function() {
@@ -1085,7 +1112,11 @@ deg_wo_clusters2 <- function(deg_dt,
 	
 	deg_dt <- deg_dt[grep('^HLA-|^IG[HJKL]|^RNA|^MT|^RP',gene,invert = T),]
 	setnames(deg_dt,'p_val_adj','adj.P.Val')
-	setnames(deg_dt,'avg_logFC','logFC')
+	if ('avg_logFC' %in% colnames(deg_dt)) {
+		setnames(deg_dt,'avg_logFC','logFC')
+	} else if ('avg_log2FC' %in% colnames(deg_dt)) {
+		setnames(deg_dt,'avg_log2FC','logFC')
+	}
 	
 	min_adj_pval <- deg_dt[adj.P.Val>0,min(adj.P.Val)]
 	deg_dt[adj.P.Val==0,adj.P.Val:=min_adj_pval]
@@ -1196,27 +1227,54 @@ deg_wo_clusters1 <- function(deg_dtj,
 	
 }
 
-load_pseudobulk <- function(seu,uq3=1,reuse=1) { #harmony seurat obj
-	rds_fn = "out/cart/harmony_findmarkers/pseudo_bulk.rd"
-	if (reuse==1 & file.exists(rds_fn)){
-		bulk.ms = readRDS(rds_fn)
-	} else {
+load_pseudobulk <- function(seu,uassay="RNA",uq3=1,debug2=0) { #harmony seurat obj
+	
 	by_cgroups <- split_seurat_by_cellgroup(seu)
 	
 	bulk.ms <- imap(by_cgroups,function(by_cgroup,cgroup){
-		counts.m <- GetAssayData(by_cgroup,slot = "counts")
-		
+		if (debug2==1) {browser()}
+		counts.m <- as.matrix(GetAssayData(by_cgroup,assay=uassay,slot = "counts"))
+		counts.m[is.na(counts.m)] = 0
 		if (uq3==1) {
 			uq_mean = get_limit_from_quantile(colSums(counts.m),target_r = 0.75)
 			counts.m = round(uq_mean*sweep(counts.m,2,colSums(counts.m),FUN="/"))
+			counts.m[is.nan(counts.m)] = 0
 		}
 		t(Matrix.utils::aggregate.Matrix(t(counts.m),
 																		 groupings = by_cgroup@meta.data$orig.ident, fun = "sum"))
 	})
-	saveRDS(bulk.ms,file=rds_fn)
-	}
 	bulk.ms
 }
+
+pseudobulk_with_replicate2 <- function(by_sample,sname,uassay="RNA",R=3,uq3=0,debug2=0) {
+	if (debug2==1) {browser()}
+	counts.m <- as.matrix(GetAssayData(by_sample,assay=uassay,slot = "counts"))
+	counts.m[is.na(counts.m)] = 0
+	cbc_on = colnames(counts.m)
+	
+	if (length(cbc_on) >= 2*R) {
+		pseudo_repi <- (sample(1:R, length(cbc_on), replace=T))
+	} else {
+		pseudo_repi = rep(1:R,length(cbc_on))
+		pseudo_repi = pseudo_repi[1:length(cbc_on)]
+	}
+	
+	pbk = NA
+	if (length(cbc_on)>0) {
+		if (uq3==1) {
+			uq_mean = get_limit_from_quantile(colSums(counts.m),target_r = 0.75)
+			counts.m = round(uq_mean*sweep(counts.m,2,colSums(counts.m),FUN="/"))
+			counts.m[is.nan(counts.m)] = 0
+		}
+		
+		pbk = t(Matrix.utils::aggregate.Matrix(t(counts.m),
+																					 groupings = pseudo_repi, fun = "sum"))
+		
+		colnames(pbk) = sprintf("%s.%s",sname,colnames(pbk))
+	}
+	pbk
+}
+
 
 load_pseudobulk_TIGIT <- function(seu,uq3=1,reuse=1) { #harmony seurat obj
 	rds_fn = "out/cart/harmony_findmarkers/pseudo_bulk_TIGIT.rds"
@@ -1248,4 +1306,29 @@ load_pseudobulk_TIGIT <- function(seu,uq3=1,reuse=1) { #harmony seurat obj
 		saveRDS(bulk.lst,file=rds_fn)
 	}
 	bulk.lst
+}
+
+map_geneSymbol_ensemblGenes <- function(genes,convert_to="GENEID",debug2=0) {
+	library(EnsDb.Hsapiens.v86)
+	if (debug2==1){browser()}
+	
+	if (convert_to=="GENEID") {
+		gene_map <- ensembldb::select(EnsDb.Hsapiens.v86, 
+																	keys= genes, 
+																	keytype = "SYMBOL", 
+																	columns = c("SYMBOL","GENEID"))
+	} else {
+		gene_map <- ensembldb::select(EnsDb.Hsapiens.v86, 
+																	keys= genes, 
+																	keytype = "GENEID", 
+																	columns = c("SYMBOL","GENEID"))
+	}
+	
+	gene_map2 <- as.data.table(gene_map)
+	gene_map2 <- gene_map2[!startsWith(GENEID,'LRG'),]
+	dupcnt <- gene_map2[,.N,by="SYMBOL"]
+	gene_map2[SYMBOL %in% dupcnt[N>1,SYMBOL],]
+	message("[WARNING]pick up the first mapped GENEID for duplicated!!!")
+	gene_map2 = gene_map2[!duplicated(SYMBOL),]
+	gene_map2[!is.na(GENEID) & !is.na(SYMBOL),]
 }

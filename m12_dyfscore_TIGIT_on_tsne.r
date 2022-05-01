@@ -290,7 +290,7 @@ plist[[1]]<-FeaturePlotSingle3(by_tgroups$pre_inf,feature="TIGIT",red2="tsne",mi
 #Fig4.B(left)
 plist[[2]]<-FeaturePlotSingle3(by_tgroups$post_inf,feature="TIGIT",red2="tsne",minimal=0,maximal=3.8,title2 = "CD8;post_inf;TIGIT")
 
-#Fig4.C(right)
+#sfig5.B(right)
 plist[[3]]<-FeaturePlotSingle3(by_tgroups$pre_inf,feature="long2015.full",red2="tsne",minimal=0,maximal=0.35,title2 = "CD8;pre_inf;long2015.full")
 
 plist[[4]]<-FeaturePlotSingle3(by_tgroups$post_inf,feature="long2015.full",red2="tsne",minimal=0,maximal=0.35,title2 = "CD8;post_inf;long2015.full")
@@ -333,7 +333,7 @@ pdf(pdf_fn,width = 12, height=12)
 plot(p)
 # ---------------
 
-#SFig3.B
+#sfig4.B
 title2 = sprintf("CD8 Tcell dysfunctional score per subtype")
 p = violin_dysfs_cellid(sm.melted,title2,c("long2015.full","sadefeldman2018.CD8T_exhaust","leun2020.CD8T_dysfunctional"))
 plot(p)

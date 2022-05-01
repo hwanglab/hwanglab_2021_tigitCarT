@@ -32,7 +32,7 @@ a2 <- smeta[,.N,by=c("orig.ident","tpoint","pmid_30726743","cd4_cd8")]
 tcell <-a2[,.(denom=sum(N)),by=c("orig.ident")]
 a2$pct <- 100. * (a2$N / tcell[match(a2$orig.ident,orig.ident),denom])
 
-#Fig2.E
+#fig2.D
 plst <- lapply(c("CD4","CD8"),function(ctype){
 	avg_subtype_comp <- acast(a2[cd4_cd8==`ctype` & !is.na(pmid_30726743),], pmid_30726743 ~ tpoint, fun.aggregate = mean, value.var = "pct")
 	

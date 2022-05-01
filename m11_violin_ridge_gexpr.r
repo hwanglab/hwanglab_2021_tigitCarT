@@ -9,6 +9,64 @@ args <- data.table(step=get_pipeline_step(fpath_dt$fpath),
 									 reuse=0,
 									 debug=0)
 
+violin_plots2_patid <- function(seuj,
+													goi,
+													my_comps,
+													field2cmp,
+													pdf_fn,
+													comp_label = "p.signif",
+													width1=6,
+													height1=12,
+													title1="expressed",
+													title2="dropout or not expressed",
+													debug2=0) {
+	
+	if (debug2==1){browser()}
+	
+	m <- GetAssayData(seuj,assay = "RNA",slot = "data")
+	goi_avail <- goi[goi %in% rownames(m)]
+	
+	gexpr.dt <- as.data.table(melt(as.matrix(m[goi_avail,]),varnames = c("gene","cbc"),value.name = "expression_level"))
+	
+	smdt = as.data.table(seuj@meta.data,keep.rownames = T)
+	
+	gexpr.dt = cbind(gexpr.dt,
+									 smdt[match(gexpr.dt$cbc,rn),
+									 		 list(orig.ident,tpoint,tgroup,cd4_cd8,resp,seurat_clusters,pmid_30726743)])
+	
+	# ----------------
+	gexpr1.dt<-gexpr.dt[expression_level>0.,]
+	
+	# -----------------------
+	
+	gexpr1.dt[,patid:=tstrsplit(orig.ident,"D")[[1]]]
+	gexpr1.dt[,patid2:=patid]
+	gexpr1.dt[patid %in% c("P3","P8"),patid2:=sprintf("%s_NR",patid)]
+	p =ggplot(gexpr1.dt,
+						aes_string(x=field2cmp, y='expression_level', fill=field2cmp)) +
+		geom_violin(position = position_dodge(width = 0.5)) +
+		stat_summary(fun.data=mean_sdl,geom="pointrange", color="black",size=0.25,fun.args = list(mult = 1)) +
+		stat_compare_means(aes_string(group=field2cmp),
+											 method="wilcox.test",
+											 hide.ns=T,
+											 vjust=0.8,
+											 label = comp_label,
+											 comparisons = my_comps) +
+		
+		facet_grid(cols=vars(gene),rows=vars(patid2)) +
+		theme(axis.title.x=element_blank(),axis.text.x=element_blank()) +
+		theme_bw() +
+		theme(legend.position="bottom") +
+		ggtitle(title1)
+	
+	
+	# ------------------------
+	
+	pdf(file=pdf_fn,width=width1,height=height1)
+	plot(p)
+	dev.off()
+}
+
 violin_plots2 <- function(seuj,
 													goi,
 													my_comps,
@@ -38,7 +96,7 @@ violin_plots2 <- function(seuj,
 	gexpr1.dt<-gexpr.dt[expression_level>0.,]
 	
 	p =ggplot(gexpr1.dt,
-						aes_string(x=field2cmp, y='expression_level', fill=field2cmp)) +
+							aes_string(x=field2cmp, y='expression_level', fill=field2cmp)) +
 		geom_violin(position = position_dodge(width = 0.5)) +
 		stat_summary(fun.data=mean_sdl,geom="pointrange", color="black",size=0.25,fun.args = list(mult = 1)) +
 		stat_compare_means(aes_string(group=field2cmp),
@@ -72,8 +130,8 @@ violin_plots2 <- function(seuj,
 		geom_violin(position = position_dodge(width = 0.5)) +
 		stat_summary(fun.data=mean_sdl,geom="pointrange", color="black",size=0.25,fun.args = list(mult = 1)) +
 		stat_compare_means(aes_string(group=field2cmp),
-											 method="t.test",
-											 # method="wilcox.test",
+											 # method="t.test",
+											 method="wilcox.test",
 											 hide.ns=T,
 											 vjust=0.8,
 											 label = comp_label,
@@ -95,16 +153,16 @@ violin_plots2 <- function(seuj,
 }
 
 violin_by_clusters_plots2 <- function(seuj,
-																			goi,
-																			my_comps,
-																			field2cmp,
-																			field2cmp_order,
-																			pdf_fn,
-																			width1=8,
-																			height1=10,
-																			comp_label = "p.signif",
-																			title1="expressed",
-																			debug2=0) {
+													goi,
+													my_comps,
+													field2cmp,
+													field2cmp_order,
+													pdf_fn,
+													width1=8,
+													height1=10,
+													comp_label = "p.signif",
+													title1="expressed",
+													debug2=0) {
 	
 	if (debug2==1){browser()}
 	
@@ -128,16 +186,16 @@ violin_by_clusters_plots2 <- function(seuj,
 	
 	lapply(cluster_group,function(clsgroup){
 		p <- ggplot(gexpr.dt[seurat_clusters %in% clsgroup,],
-								aes_string(x=field2cmp, y='expression_level', fill=field2cmp)) +
+				 aes_string(x=field2cmp, y='expression_level', fill=field2cmp)) +
 			geom_violin(position = position_dodge(width = 0.5)) +
 			stat_summary(fun.data=mean_sdl,geom="pointrange", color="black",size=0.25,fun.args = list(mult = 1)) +
 			stat_compare_means(aes_string(group=field2cmp),
-												 # method="t.test",
+												 
 												 method="wilcox.test",
 												 hide.ns=T,
 												 vjust=0.8,
 												 label = comp_label,
-												 #label = "p.signif",
+												 # label = "p.signif",
 												 comparisons = my_comps) +
 			
 			facet_grid(cols=vars(gene),rows=vars(seurat_clusters)) +
@@ -153,15 +211,17 @@ violin_by_clusters_plots2 <- function(seuj,
 
 
 violin_by_patient_plots <- function(seuj,
-																		goi,
-																		my_comps,
-																		field2cmp,
-																		field2cmp_order,
-																		pdf_fn,
-																		width1=8,
-																		height1=10,
-																		title1="expressed",
-																		debug2=0) {
+																			goi,
+																			my_comps,
+																			field2cmp,
+																			field2cmp_order,
+																			pdf_fn,
+																			width1=8,
+																		comp_label = "p.signif",
+																		test_method="wilcox.test",
+																			height1=10,
+																			title1="expressed",
+																			debug2=0) {
 	
 	if (debug2==1){browser()}
 	
@@ -187,7 +247,7 @@ violin_by_patient_plots <- function(seuj,
 	plist = imap(by_resps,function(clsgroup,rgroup) {
 		# clsgroup = by_resps[[1]]
 		# rgroup = "R"
-		
+		if (debug2==1){browser()}
 		#we are interested in pat sample that has both pre and post
 		a=acast(clsgroup[,.N,by=c('patid','tgroup')], patid ~ tgroup,value.var = "N")
 		a[is.na(a)]=0
@@ -197,13 +257,12 @@ violin_by_patient_plots <- function(seuj,
 								aes_string(x=field2cmp, y='expression_level', fill=field2cmp)) +
 			geom_violin(position = position_dodge(width = 0.5)) +
 			stat_summary(fun.data=mean_sdl,geom="pointrange", color="black",size=0.25,fun.args = list(mult = 1)) +
-			# stat_compare_means(aes_string(group=field2cmp),
-			# 									 # method="t.test",
-			# 									 method="wilcox.test",
-			# 									 hide.ns=T,
-			# 									 vjust=0.8,
-			# 									 label = "p.signif",
-			# 									 comparisons = my_comps) +
+			stat_compare_means(aes_string(group=field2cmp),
+												 method=test_method,
+												 hide.ns=T,
+												 vjust=0.8,
+												 label = comp_label,
+												 comparisons = my_comps) +
 			
 			facet_grid(cols=vars(patid),rows=vars(gene)) +
 			theme(axis.title.x=element_blank(),axis.text.x=element_blank()) +
@@ -253,20 +312,23 @@ plist <- lapply(names(seus),function(ctype) {
 	
 	seuj <- seus[[ctype]]
 	
-	#Fig3.F
+	#fig2.C;sfig6.L
 	violin_by_patient_plots(seuj,
 													goi,
 													my_comps,
 													field2cmp="tgroup",
 													field2cmp_order = c("pre_inf","post_inf"),
-													pdf_fn=file.path(args$outd,sprintf("%s_checkpoint_inhib_expr_per_patid.pdf",ctype)),
+													pdf_fn=file.path(args$outd,sprintf("%s_checkpoint_inhib_expr_per_patid_%s_TIGIT.pdf",ctype,comp_label2)),
+													# pdf_fn=file.path(args$outd,sprintf("%s_checkpoint_inhib_expr_per_patid_%s_TIGIT.pdf",ctype,comp_label2)),
 													width1=8,
-													height1=10,
+													comp_label = comp_label2,
+													height1=8,
 													title1=sprintf("[%s] checkpoint inhibitors expression level per patid",ctype),
 													debug2=0)
 })
 
 # ========================
+# 
 message("split cells into tgroup ...")
 my_comps <- list(c("NR","R"))
 goi <- c("CTLA4","LAG3","HAVCR2","PDCD1","TIGIT","VSIR")
@@ -287,39 +349,51 @@ plist <- lapply(names(seus),function(tgroup) {
 		seujm <- subset(seuj,seurat_clusters %in% maj_clusters)
 		
 		violin_by_clusters_plots2(seujm,
-															goi,
-															my_comps,
-															field2cmp="resp",
-															field2cmp_order = c("R","NR"),
-															comp_label = "p.signif",
-															#comp_label = "p.format",
-															pdf_fn=file.path(args$outd,sprintf("%s_%s_checkpoint_inhib_expr_per_resp.pdf",tgroup,ctype)),
-															width1=8,
-															height1=10,
-															title1=sprintf("[%s;%s] checkpoint inhibitors expression level per resp",tgroup,ctype),
-															debug2=0)
+									goi,
+									my_comps,
+									field2cmp="resp",
+									field2cmp_order = c("R","NR"),
+									comp_label = comp_label2,
+									pdf_fn=file.path(args$outd,sprintf("%s_%s_checkpoint_inhib_expr_per_cid_by_resp_%s.pdf",tgroup,ctype,comp_label2)),
+									width1=10,
+									height1=10,
+									title1=sprintf("[%s;%s] checkpoint inhibitors expression level per resp",tgroup,ctype),
+									debug2=0)
 	})
 })
 
 # =================
+goi <- c("CTLA4","LAG3","HAVCR2","PDCD1","TIGIT","VSIR","KLRG1","IL7R","CLDN18")
 
 seu_by_ctypes <- split_seurat_by_cellgroup(seu,debug2=0)
 
 my_comps <- list(c("D0","D14"),c("D0","D30"),c("D14","D30"))
 
+comp_label2 = "p.format"
+# comp_label2 = "p.signif"
+
 lapply(names(seu_by_ctypes),function(ctype) {
-	pdf_fn <- file.path(args$outd,sprintf("%s_checkpoint_inhib_exprlev_per_tpoint.pdf",ctype))
-	#Fig2.D
+	#sfig2.B;sfig3.A
 	violin_plots2(seu_by_ctypes[[ctype]],
 								goi,
 								my_comps,
 								field2cmp="tpoint",
-								pdf_fn=file.path(args$outd,sprintf("%s_checkpoint_inhib_expr_per_tpoint.pdf",ctype)),
-								width1=8,
-								comp_label = "p.signif",
-								# comp_label = "p.format",
+								pdf_fn=file.path(args$outd,sprintf("%s_checkpoint_inhib_expr_per_tpoint_%s.pdf",ctype,comp_label2)),
+								width1=13,
+								comp_label = comp_label2,
 								height1=10,
 								title1=sprintf("[%s] checkpoint inhibitors expression level (>0.) per timepoint",ctype),
 								title2=sprintf("[%s] cell pct where checkpoint inhibitors never expressed",ctype),
 								debug2=0)
+	
+	violin_plots2_patid(seu_by_ctypes[[ctype]],
+								goi,
+								my_comps,
+								field2cmp="tpoint",
+								pdf_fn=file.path(args$outd,sprintf("%s_checkpoint_inhib_expr_per_tpoint_patid_%s.pdf",ctype,comp_label2)),
+								comp_label = comp_label2,
+								title1=sprintf("[%s] checkpoint inhibitors expression level (>0.) per timepoint",ctype),
+								title2=sprintf("[%s] cell pct where checkpoint inhibitors never expressed",ctype),
+								debug2=0)
+	
 })

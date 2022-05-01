@@ -133,7 +133,7 @@ imap(by_cgroups,function(seu,ctype) {
 	
 	pdf_pref2 <- file.path(args$outd,sprintf("tgroup_per_cluster_%s",ctype))
 	
-	#Fig2.C (Fig3.D)
+	#removed from ms_fig (was in Fig2C, 2021.04.26 version)
 	heatmap_annotated_clusters(title2,
 														 deg_dt[(gene %in% get_immreg_genes(extended=1) & p_val_adj<0.05),],
 														 smeta = as.data.table(seu@meta.data),
@@ -395,7 +395,7 @@ plist <- lapply(names(seus),function(tgroup) {
 		saveRDS(deg_dt,file=rds_file)
 	}
 	
-	#Fig3.C
+	#fig3.C
 	deg_wo_clusters2(deg_dt[cluster_id!="unk",],
 									domain1="CD4",
 									domain2="CD8",

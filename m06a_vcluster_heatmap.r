@@ -25,7 +25,7 @@ harmony_rds=locate_harmony_rds()
 
 args$harmony_rds <-harmony_rds$seu
 args$marker_rds <-harmony_rds$deg
-vcluster_heatmap(args) #Fig1.B, Fig1.C, Fig2.E, Fig2.F, Fig3.B
+vcluster_heatmap(args) #Fig1.B, Fig1.C, fig2.D, Fig2.F, Fig3.B
 
 # ================
 rds_fn <- file.path(args$outd,"CART_harmony_meta.rds")
@@ -61,7 +61,7 @@ cellcnt_by_cluster[,outcome:=factor(outcome,level=c("R","NR"))]
 
 my_comps <- list(c("R","NR"))
 
-#SFig3.A
+#sfig4.A
 title2="T cell subtype in fraction and compared by the patient treatment response"
 p <- ggplot(cellcnt_by_cluster[!is.na(pmid_30726743),],aes(x=outcome,y=pct,fill=outcome)) +
 	geom_boxplot(position=position_dodge2(width=0.75)) +

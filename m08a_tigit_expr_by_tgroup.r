@@ -111,7 +111,7 @@ on_pct.dt2$annot <- ""
 on_pct.dt2[tgroup=="pre_inf",annot:=patid]
 on_pct.dt2[tgroup=="post_inf",annot:=sprintf("Log2FC:%3.2g(FDR:%3.2g)",avg_logFC,p_val_adj)]
 
-#Fig3.G
+#fig3.E
 p = ggplot(on_pct.dt2,aes(x=tgroup,
 										 y=on_pct,
 										 group=patid,
