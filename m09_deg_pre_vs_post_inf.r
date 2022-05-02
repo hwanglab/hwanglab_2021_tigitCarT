@@ -4,8 +4,8 @@ source('lib/lib_project.r')
 fpath_dt <- get_current_script_fpath()
 
 args <- data.table(step=get_pipeline_step(fpath_dt$fpath),
-									 outd="out/cart/deg_pre_vs_post_inf",
-									 inrds1="out/cart/vcluster_heatmap/pmid_30726743_pct_by_seurat_clusters.rds",
+									 outd=get_wkd(get_projd0(),fpath_dt$fpath),
+									 inrds1="results/cart/m06a_vcluster_heatmap/pmid_30726743_pct_by_seurat_clusters.rds",
 									 cluster_col="seurat_clusters",
 									 dge_method="MAST",
 									 ncpu=2,
@@ -73,19 +73,14 @@ deg_wo_clusters <- function(deg_dt,
 	}
 	
 	ht_list <- Heatmap(m, 
-										 column_title = sprintf("%s;logFC of %s to %s\n(FDR<%g & |logFC|>=%g)",mtitle,expr2,ctrl1,apval.co,logFc.co),
-					cluster_rows = TRUE, 
-					name="logFC",
-					# right_annotation = ha,
-					col=col_fun,
-					show_row_names=TRUE
-					# row_names_gp = gpar(fontsize = 4),
-					# heatmap_legend_param = list(direction = "horizontal")
-					)
+										 column_title = sprintf("%s;logFC of %s to %s\n(FDR<%g & |logFC|>=%g)",
+										 											 mtitle,expr2,ctrl1,apval.co,logFc.co),
+										 cluster_rows = TRUE, 
+										 name="logFC",
+										 col=col_fun,
+										 show_row_names=TRUE)
 	
 	ComplexHeatmap::draw(ht_list, heatmap_legend_side = "right")
-	# p <- grid::grid.grabExpr(ComplexHeatmap::draw(ht_list,annotation_legend_side = "bottom"))
-	# return(p)
 	if (debug2==0){dev.off()}
 }
 
@@ -103,8 +98,6 @@ region_col <- "whole"
 
 cellid_frac.dt <- readRDS(args$inrds1)
 
-# pdf_fn <- file.path(args$outd,"deg_tgroup_per_cluster.pdf")
-# pdf(file=pdf_fn,width=6,height=12)
 # ====================
 imap(by_cgroups,function(seu,ctype) {
 
@@ -410,5 +403,4 @@ plist <- lapply(names(seus),function(tgroup) {
 									topk1 = 15,
 									topk2 = 15,
 									debug2=0)
-	
 })

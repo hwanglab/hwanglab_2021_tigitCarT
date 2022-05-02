@@ -27,7 +27,7 @@ library(SingleCellExperiment)
 library(SingleR)
 library(harmony) #install_github("immunogenomics/harmony")
 library(SeuratWrappers) #remotes::install_github('satijalab/seurat-wrappers')
-library(monocle3) #devtools::install_github('cole-trapnell-lab/leidenbase');devtools::install_github('cole-trapnell-lab/monocle3');https://cole-trapnell-lab.github.io/monocle3/docs/installation/
+# library(monocle3) #devtools::install_github('cole-trapnell-lab/leidenbase');devtools::install_github('cole-trapnell-lab/monocle3');https://cole-trapnell-lab.github.io/monocle3/docs/installation/
 
 # use_condaenv(condaenv="scell",conda="/media/sammy/apps/miniconda3/bin/conda")
 

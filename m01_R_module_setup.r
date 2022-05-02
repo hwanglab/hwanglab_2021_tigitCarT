@@ -3,10 +3,11 @@ if(!require(BiocManager)){
 	library('BiocManager')
 }
 
-req_pkg=read.table('./req_pkg.tsv')
+req_pkg=read.table('lib/req_pkg.tsv')
+
 for (pkg in req_pkg$V1) {
-	browser()
-	if( !is.element(pkg, .packages(all.available = TRUE)) ) {
+	message(sprintf("checking if [%s] is available ...",pkg))
+	if (!is.element(pkg, .packages(all.available = TRUE))) {
 		message(sprintf("installing %s ...",pkg))
 		BiocManager::install(pkgs=pkg)
 		message("Done.")

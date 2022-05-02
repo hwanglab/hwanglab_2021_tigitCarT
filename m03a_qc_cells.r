@@ -1,6 +1,6 @@
 # author1: hongc2@ccf.org
 
-library(data.table)
+source('lib/lib_project.r')
 
 if (T) {
 	library(argparse)
@@ -36,8 +36,8 @@ if (T) {
 	
 	args <- parser$parse_args()
 } else {
-	args <- data.table(raw_seu_rd="out/raw_seus.rds",
-										 outd="out/qc_cells",
+	args <- data.table(raw_seu_rd="results/raw_seus.rds",
+										 outd="results/qc_cells",
 										 sd_filtx=2.5,
 										 mt_pct=15.,
 										 doubletr=0.,
@@ -46,10 +46,6 @@ if (T) {
 }
 
 #use_condaenv(condaenv="Renv", conda="~/miniconda3/bin/conda")
-
-source(file.path(Sys.getenv('R_UTIL'),'lib_apps.R'))
-source(file.path(Sys.getenv('R_UTIL'),'lib_workflow.r'))
-source(file.path(Sys.getenv('R_UTIL'),'lib_seurat3.r'))
 
 library(Seurat)
 library(openxlsx)

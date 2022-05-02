@@ -8,7 +8,7 @@ source('lib/lib_project.r')
 fpath_dt <- get_current_script_fpath()
 
 args <- data.table(step=get_pipeline_step(fpath_dt$fpath),
-									 outd="out/cart/vcluster_heatmap",
+									 outd=get_wkd(get_projd0(),fpath_dt$fpath),
 									 cluster_col="seurat_clusters",
 									 heatmap_title="CART",
 									 ncpu=1,
@@ -33,6 +33,7 @@ if (args$reuse==1 & file.exists(rds_fn)) {
 	smeta <- readRDS(rds_fn)
 } else {
 	seui <- readRDS_w_msg(harmony_rds$seu)
+	seui <- add_meta2(seui)
 	smeta = as.data.table(seui@meta.data)
 	rm(seui)
 	saveRDS(smeta,file=rds_fn)
@@ -95,7 +96,7 @@ ret=rankSumTest_tryCatch(x,y)
 
 
 # ==============
-if (debug2==1){browser()}
+if (args$debug2==1){browser()}
 pmeta <- readRDS(get_meta_rds())
 
 cellcnt_by_cluster <- smeta[,.N,by=c("orig.ident","seurat_clusters")]
@@ -139,7 +140,7 @@ tsv_fn = file.path(args$outd,"patient_spct_by_cluster.tsv")
 fwrite(agg_pct,file=tsv_fn,sep="\t")
 
 # ==============
-if (debug2==1){browser()}
+if (args$debug2==1){browser()}
 pmeta <- readRDS(get_meta_rds())
 
 cellcnt_by_cluster <- smeta[,.N,by=c("orig.ident","seurat_clusters","pmid_30726743","Phase")]
@@ -186,5 +187,3 @@ dev.off()
 
 tsv_fn = file.path(args$outd,"cellcycle_spct_by_cluster.tsv")
 fwrite(agg_pct,file=tsv_fn,sep="\t")
-
-ifttt_notify(fpath_dt$fbase0)

@@ -4,7 +4,7 @@ source('lib/lib_project.r')
 fpath_dt <- get_current_script_fpath()
 
 args <- data.table(step=get_pipeline_step(fpath_dt$fpath),
-									 outd="out/cart/tigit_expr_by_tgroup",
+									 outd=get_wkd(get_projd0(),fpath_dt$fpath),
 									 dge_method="MAST",
 									 ncpu=2,
 									 reuse=1,

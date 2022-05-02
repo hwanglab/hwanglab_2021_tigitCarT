@@ -2,30 +2,6 @@
 source("lib/lib_project.r")
 
 # ==============
-FeaturePlotSingle2 <- function(obj, feature, metadata_column, assay2="RNA", red2="umap",minimal=0,maximal=1, sample_cellcnt=30590, ...) {
-	
-	obj <- obj[, sample(colnames(obj), size=sample_cellcnt, replace=F)]
-	
-	all_cells<- colnames(obj)
-	# groups<- levels(obj@meta.data[, metadata_column])
-	groups<- sort(unique(obj@meta.data[[metadata_column]]))
-	
-	# the minimal and maximal of the value to make the legend scale the same.
-	
-	ps<- list()
-	for (group in groups) {
-		subset_indx<- obj@meta.data[, metadata_column] == group
-		subset_cells<- all_cells[subset_indx]
-		p<- FeaturePlot(obj, features = feature, cells= subset_cells, reduction=red2, raster = FALSE, ...) +
-			scale_color_viridis_c(limits=c(minimal, maximal), direction = 1) +
-			ggtitle(group) +
-			theme(plot.title = element_text(size = 10, face = "bold"))
-		ps[[group]]<- p
-	}
-	return(ps)
-}
-
-# ==============
 FeaturePlotSingle3 <- function(obj, feature, assay2="RNA", red2="umap",minimal=0,maximal=1, sample_cellcnt=26213,title2="featureMap", ...) {
 	
 	obj <- obj[, sample(colnames(obj), size=sample_cellcnt, replace=F)]

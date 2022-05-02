@@ -1,7 +1,6 @@
 # author1: hongc2@ccf.org
 
 library(data.table)
-source(file.path(Sys.getenv('R_UTIL'),'lib_util.R'))
 source('lib/lib_project.r')
 
 if (T) {
@@ -41,7 +40,7 @@ if (T) {
   args <- parser$parse_args()
 } else {
   fpath_dt <- get_current_script_fpath()
-  args <- data.table(cellranger_countd="outd/cellranger",
+  args <- data.table(cellranger_countd="results/cellranger",
                      pos_quantile=0.6,
                      outd=get_outd(get_proj_out0(fpath_dt$parentd),fpath_dt$fpath),
                      soi="",
@@ -50,10 +49,6 @@ if (T) {
 }
 
 message(str(args))
-
-source(file.path(Sys.getenv('R_UTIL'),'lib_apps.R'))
-source(file.path(Sys.getenv('R_UTIL'),'lib_workflow.r'))
-source(file.path(Sys.getenv('R_UTIL'),'lib_seurat3.r'))
 
 library(reticulate)
 library(openxlsx)

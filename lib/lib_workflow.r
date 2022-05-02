@@ -693,15 +693,6 @@ get_job_msg <- function(jobname,state="F") {
 	job_msg <- sprintf("[%s-%s]%s",uuid,jobname,state)
 }
 
-ifttt_notify <- function(jobname="hwang_lab",state="F") {
-	key = "<hidden>"
-	job_msg <- get_job_msg(jobname,state)
-	
-	# tmp_logd = file.path(Sys.getenv('TMPDIR'),'logd')
-	# sys_logd = file.path(Sys.getenv('PPLINE'),'logd')
-	url2post <- sprintf("<hidden>",key,job_msg)
-	POST(url2post,body=NULL,verbose())
-}
 
 assign_batch_run <- function(tn4_dt,num_scripts=8,batch_run_prefix="br") {
 	tn4_dt$sidx <- 1:nrow(tn4_dt)

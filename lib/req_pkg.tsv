@@ -50,10 +50,10 @@ matrixStats
 pheatmap
 SingleCellExperiment
 SingleR
-monocle3
 data.table
 stringr
 tools
 yaml
 configr
 httr
+randomcoloR

@@ -1,5 +1,6 @@
 # author1: hongc2@ccf.org
  
+source('lib/lib_project.r')
 library(data.table)
 
 if (T) {
@@ -75,17 +76,11 @@ if (T) {
 										 debug=0,
 										 pmid_ref="pmid_30726743",
 										 ref_label="label.main",
-										 outd="out/cart/cell_id_by_singler",
-										 debugd="out/cart/cell_id_by_singler/pmid_30726743.tmp")
+										 outd="results/cart/cell_id_by_singler",
+										 debugd="results/cart/cell_id_by_singler/pmid_30726743.tmp")
 }
 
 message(str(args))
-
-source(file.path(Sys.getenv('R_UTIL'),'lib_apps.R'))
-source(file.path(Sys.getenv('R_UTIL'),'lib_util.R'))
-source(file.path(Sys.getenv('R_UTIL'),'lib_workflow.r'))
-source(file.path(Sys.getenv('R_UTIL'),'lib_seurat3.r'))
-source('lib_project.r')
 
 library(Seurat)
 library(parallel)

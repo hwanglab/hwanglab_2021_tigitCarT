@@ -4,7 +4,7 @@ source('lib/lib_project.r')
 fpath_dt <- get_current_script_fpath()
 
 args <- data.table(step=get_pipeline_step(fpath_dt$fpath),
-									 outd="out/cart/celltype_spiderweb",
+									 outd=get_wkd(get_projd0(),fpath_dt$fpath),
 									 cluster_col="seurat_clusters,pmid_30726743",
 									 dominant_cluster=1,
 									 ncpu=2,

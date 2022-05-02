@@ -17,20 +17,22 @@ library(ggbeeswarm)
 library(AUCell)
 library(GSEABase)
 library(MASS)
+library(randomcoloR)
 
-source(file.path(Sys.getenv('R_UTIL'),'lib_util.R'))
-source(file.path(Sys.getenv('R_UTIL'),'lib_apps.R'))
-source(file.path(Sys.getenv('R_UTIL'),'lib_workflow.r'))
-source(file.path(Sys.getenv('R_UTIL'),'lib_rnaseq.r'))
-source(file.path(Sys.getenv('R_UTIL'),'lib_seurat3.r'))
+source('~/projects/hwanglab_2021_tigitCarT/lib/lib_util.R')
+source('~/projects/hwanglab_2021_tigitCarT/lib/lib_apps.R')
+source('~/projects/hwanglab_2021_tigitCarT/lib/lib_workflow.r')
+source('~/projects/hwanglab_2021_tigitCarT/lib/lib_rnaseq.r')
+source('~/projects/hwanglab_2021_tigitCarT/lib/lib_seurat3.r')
 
-# library(randomcoloR)
-# source(file.path(Sys.getenv('R_UTIL'),'lib_seurat3.r'))
- 
-get_projd0 <- function(subd=NA) {
-	outd='out'
+get_projd0 <- function(subd="cart") {
+	outd='results'
 	if (!is.na(subd)) {
 		outd=file.path(outd,subd)
+	}
+	
+	if (!file.exists(outd)) {
+		dir.create(outd,showWarnings = F,recursive = T)
 	}
 	outd
 }
@@ -116,7 +118,7 @@ get_cellid_seus_rds <- function(stype="cart") {
 }
 
 get_20210202_seus_rds <- function(stype="cart") {
-	sprintf('~/projects/20201123.cart/m01_3seqruns/samples_20210202/%s/seus_20210202.rds',stype)
+	sprintf('~/projects/hwanglab_2021_tigitCarT/data/seus_20210202.rds')
 }
 
 get_meta_rds <- function(stype="cart") {
@@ -422,8 +424,7 @@ heatmap_annotated_clusters <- function(plot_title,cls_marker_deg,smeta,pdf_pref,
 }
 
 get_harmony_seui_smeta <- function(ctype="CART") {
-	csize=readRDS('~/projects/20201123.cart/m01_3seqruns/cart/03a_cluster_size_comp/03a_cluster_size_pcts.rds')
-	
+	csize=readRDS('~/projects/hwanglab_2021_tigitCarT/data/03a_cluster_size_pcts.rds')
 	csize$smeta[is.na(pmid_30726743),pmid_30726743:="unk"]
 	csize
 }
@@ -505,7 +506,7 @@ Heatmap_annot_gen <- function(ret,ctypes=c("CD4","CD8"),debug2=0) {
 		annot_text_ci = anno_text(cluster_ids,gp=gpar(fontsize=rep(12,length(cluster_ids))))
 
 		N1=dim(ret$profs$CD4)[1]
-		cgroup_col = distinctColorPalette(N1)
+		cgroup_col = randomcoloR::distinctColorPalette(N1)
 		
 		N2=dim(ret$profs$CD4)[2]
 		cd4_col = distinctColorPalette(N2)
@@ -531,7 +532,7 @@ Heatmap_annot_gen <- function(ret,ctypes=c("CD4","CD8"),debug2=0) {
 		annot_text_ci = anno_text(cluster_ids,gp=gpar(fontsize=rep(12,length(cluster_ids))))
 		
 		N1=dim(ret$profs$CD8)[1]
-		cgroup_col = distinctColorPalette(N1)
+		cgroup_col = randomcoloR::distinctColorPalette(N1)
 
 		N3=dim(ret$profs$CD8)[2]
 		cd8_col = distinctColorPalette(N3)
@@ -555,7 +556,7 @@ Heatmap_annot_gen <- function(ret,ctypes=c("CD4","CD8"),debug2=0) {
 		annot_text_ci = anno_text(cluster_ids,gp=gpar(fontsize=rep(12,length(cluster_ids))))
 		
 		N1=dim(ret$profs$CD8)[1]
-		cgroup_col = distinctColorPalette(N1)
+		cgroup_col = randomcoloR::distinctColorPalette(N1)
 		
 		N2=dim(ret$profs$CD4)[2]
 		cd4_col = distinctColorPalette(N2)
@@ -729,11 +730,9 @@ select_samples_from_sdt <- function(sample_meta,suffix="20210202") {
 
 #checked 05/14/2021
 harmony_findmarkers <- function(seus,
-																		stype="cart",
-																		stepd="harmony_findmarkers",
-																		reuse=1) {
+																wkd,
+																reuse=1) {
 	
-	wkd<-file.path(get_projd0(),stype,stepd)
 	if (!file.exists(wkd)){dir.create(wkd,showWarnings = F,recursive = T)}
 	# -------------------------
 	message(sprintf("aligning samples ..."))
@@ -772,10 +771,23 @@ harmony_findmarkers <- function(seus,
 }
 
 locate_harmony_rds <- function(stype="cart",
-															stepd="harmony_findmarkers") {
-	wkd<-file.path(get_projd0(),stype,stepd)
-	list(seu=file.path(wkd,sprintf("seui.rds")),
-			 deg=file.path(wkd,sprintf("cls_deg.rds")))
+															 stepd="m05a_harmony_findmarkers") {
+	
+	wkd = "~/projects/hwanglab_2021_tigitCarT/results/cart/m05a_harmony_findmarkers"
+	
+	seu_fn = file.path(wkd,"seui.rds")
+	deg_fn = file.path(wkd,"cls_deg.rds")
+	if (!file.exists(seu_fn) | !file.exists(deg_fn)){
+		wkd = "~/projects/hwanglab_2021_tigitCarT/data"
+		seu_fn = file.path(wkd,"seui.rds")
+		deg_fn = file.path(wkd,"cls_deg.rds")
+		if (!file.exists(seu_fn) | !file.exists(deg_fn)) {
+			stop("proceed m05 step first!")
+		}
+	}
+	
+	list(seu=seu_fn,
+			 deg=deg_fn)
 }
 
 vcluster_heatmap <- function(args) {
@@ -791,9 +803,10 @@ vcluster_heatmap <- function(args) {
 	
 	check_fpath(args$harmony_rds)
 	seui <- readRDS_w_msg(args$harmony_rds)
+	seui <- add_meta2(seui)
 	
 	#Fig1.B, Fig2.E, Fig3.B
-	dimplot_pdf_fns = dimplot_by_meta(sui,pdf_outd=args$outd)
+	dimplot_pdf_fns = dimplot_by_meta(seui,pdf_outd=args$outd)
 	
 	# -------------------
 	message("drawing scaled heatmap w/ cluster markers by only avgLogFC ...")
@@ -949,7 +962,7 @@ get_non_responders <- function() {
 }
 
 get_cluster_size_rd <- function() {
-	rds_fpath = "~/projects/20201123.cart/m01_3seqruns/cart/03a_cluster_size_comp/03a_cluster_size_pcts.rds"
+	rds_fpath = "~/projects/hwanglab_2021_tigitCarT/data/03a_cluster_size_pcts.rds"
 	readRDS_w_msg(rds_fpath)
 }
 
@@ -1073,7 +1086,7 @@ dysfunction_genes_list <- function(topK=100) {
 	sadefeldman2018.CD8T_exhaust <- c('LAG3','PDCD1','HAVCR2','TIGIT','CD38','ENTPD1')
 	leun2020.CD8T_dysfunctional <- c('LAYN','ITGAE','PDCD1','CTLA4','HAVCR2','LAG3','TIGIT','CXCL13','CD38','ENTPD1','CDK1','HSPH1','CCNB1','HSPB1','MKI67','CDK4','GZMB','TOX','IFNG','MIR155HG','TNFRSF9','RB1')
 	
-	long2015.all <- as.data.table(openxlsx::read.xlsx('~/projects/20201123.cart/m01_3seqruns/cart_r1r2/05a_aucell/ref_dysfunctional_markers/Long_2015_Exh_Gene_Set_GD2-CD28_vs_CD19-CD28.xlsx',sheet=1))
+	long2015.all <- as.data.table(openxlsx::read.xlsx('~/projects/hwanglab_2021_tigitCarT/data/ref_dysfunctional_markers/Long_2015_Exh_Gene_Set_GD2-CD28_vs_CD19-CD28.xlsx',sheet=1))
 	
 	j <- which(long2015.all$`Fold-Change(GD2.28z.vs..CD19.28z).(Description)`=="GD2 28z up vs CD19 28z")
 	
@@ -1277,7 +1290,7 @@ pseudobulk_with_replicate2 <- function(by_sample,sname,uassay="RNA",R=3,uq3=0,de
 
 
 load_pseudobulk_TIGIT <- function(seu,uq3=1,reuse=1) { #harmony seurat obj
-	rds_fn = "out/cart/harmony_findmarkers/pseudo_bulk_TIGIT.rds"
+	rds_fn = "results/cart/m05a_harmony_findmarkers/pseudo_bulk_TIGIT.rds"
 	if (reuse==1 & file.exists(rds_fn)){
 		bulk.lst = readRDS(rds_fn)
 	} else {
